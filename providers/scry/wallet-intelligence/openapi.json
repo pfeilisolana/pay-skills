@@ -13,7 +13,7 @@
       "altText": "Scry Wallet Intelligence"
     },
     "x-provider": "Scry",
-    "x-guidance": "Paid Scry routes require x402 v2 PAYMENT-SIGNATURE (exact USDC). Start with GET /x402/solana/agent-intel-brief or GET /x402/wallet/{address}/quick-flag. Free discovery: /openapi.json, /x402/products.json, /.well-known/x402. Responses are evidence-only; trust per-response freshness fields. Aggregate attestation may be stale — do not assume a fresh SLA from this document.",
+    "x-guidance": "Paid Scry routes require x402 v2 PAYMENT-SIGNATURE (exact USDC). Start with GET /x402/solana/agent-intel-brief or GET /x402/wallet/{address}/quick-flag. Free discovery: /openapi.json, /x402/products.json, /.well-known/x402. Responses are evidence-only; trust per-response freshness fields and live /x402/freshness-sla.json for aggregate SLA (fresh when stale_count=0); quality may still be yellow for coverage.",
     "x-full-spec-url": "https://scry.solanahub.de/openapi-full.json"
   },
   "servers": [
