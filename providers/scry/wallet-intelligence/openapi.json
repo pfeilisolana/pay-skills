@@ -357,7 +357,7 @@
               "type": "string"
             },
             "description": "Workflow id from GET /x402/workflows.json.",
-            "example": "one-wallet-source-of-funds"
+            "example": "wallet-triage"
           }
         ],
         "responses": {
