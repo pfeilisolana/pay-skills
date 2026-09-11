@@ -64,13 +64,19 @@ jobs:
       # than one that loudly fails.
       - name: Resolve and validate excluded FQNs
         id: excluded
+        env:
+          FQN_1: ${{ inputs.fqn_1 }}
+          FQN_2: ${{ inputs.fqn_2 }}
+          FQN_3: ${{ inputs.fqn_3 }}
+          FQN_4: ${{ inputs.fqn_4 }}
+          FQN_5: ${{ inputs.fqn_5 }}
         run: |
           RAW=$(printf '%s\n%s\n%s\n%s\n%s\n' \
-            "${{ inputs.fqn_1 }}" \
-            "${{ inputs.fqn_2 }}" \
-            "${{ inputs.fqn_3 }}" \
-            "${{ inputs.fqn_4 }}" \
-            "${{ inputs.fqn_5 }}")
+            "$FQN_1" \
+            "$FQN_2" \
+            "$FQN_3" \
+            "$FQN_4" \
+            "$FQN_5")
           FQNS=$(echo "$RAW" | sed -E 's|^[[:space:]]+||;s|[[:space:]]+$||' | grep -v '^$' | sort -u)
           if [ -z "$FQNS" ]; then
             echo "::error::No FQNs provided. At least one is required."
@@ -96,8 +102,10 @@ jobs:
       # missing directory is the same as a non-existent provider —
       # no special flag needed.
       - name: Remove excluded providers from working tree
+        env:
+          EXCLUDED_FQNS: ${{ steps.excluded.outputs.fqns }}
         run: |
-          for fqn in $(echo "${{ steps.excluded.outputs.fqns }}" | tr ',' ' '); do
+          for fqn in $(echo "$EXCLUDED_FQNS" | tr ',' ' '); do
             echo "Removing providers/$fqn"
             rm -rf "providers/$fqn"
           done
@@ -124,9 +132,11 @@ jobs:
       # Done schema-agnostically: grep for the FQN literal in the
       # built index and check that no detail file remains on disk.
       - name: Assert excluded FQNs are not in dist/
+        env:
+          EXCLUDED_FQNS: ${{ steps.excluded.outputs.fqns }}
         run: |
           fail=0
-          for fqn in $(echo "${{ steps.excluded.outputs.fqns }}" | tr ',' ' '); do
+          for fqn in $(echo "$EXCLUDED_FQNS" | tr ',' ' '); do
             if grep -q "\"fqn\": \"$fqn\"" dist/skills.json; then
               echo "::error::$fqn still appears in dist/skills.json after exclusion"
               fail=1
@@ -143,12 +153,14 @@ jobs:
           [ $fail -eq 0 ]
 
       - name: Show summary
+        env:
+          EXCLUDED_FQNS: ${{ steps.excluded.outputs.fqns }}
         run: |
           {
             echo "## Circuit breaker rebuild"
             echo ""
             echo "Excluded FQNs:"
-            for fqn in $(echo "${{ steps.excluded.outputs.fqns }}" | tr ',' ' '); do
+            for fqn in $(echo "$EXCLUDED_FQNS" | tr ',' ' '); do
               echo "- \`$fqn\`"
             done
             echo ""

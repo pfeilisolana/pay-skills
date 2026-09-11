@@ -76,6 +76,8 @@ jobs:
       # (provider blocked), so reviewers see the verdict either way.
       - name: Probe + Solana-compat gate (changed providers)
         if: steps.changed.outputs.skip == 'false'
+        env:
+          CHANGED_FILES: ${{ steps.changed.outputs.files }}
         run: |
           trap '[ -s verdict.md ] && cat verdict.md >> "$GITHUB_STEP_SUMMARY" || true' EXIT
           docker run --rm \
@@ -84,7 +86,7 @@ jobs:
             -w /repo \
             $PAY_IMAGE \
             catalog check . \
-              --files ${{ steps.changed.outputs.files }} \
+              --files $CHANGED_FILES \
               --currencies USDC,USDT \
               --probe-timeout 15 \
               --probe-concurrency 5 \

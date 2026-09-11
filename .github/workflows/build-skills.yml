@@ -88,6 +88,8 @@ jobs:
       # `--files` so we don't need git inside the container.
       - name: Solana-compat validation (gate)
         if: steps.changed.outputs.skip == 'false'
+        env:
+          CHANGED_FILES: ${{ steps.changed.outputs.files }}
         run: |
           docker run --rm \
             -u "$(id -u):$(id -g)" \
@@ -95,7 +97,7 @@ jobs:
             -w /repo \
             $PAY_IMAGE \
             catalog check . \
-              --files ${{ steps.changed.outputs.files }} \
+              --files $CHANGED_FILES \
               --currencies USDC,USDT \
               --probe-timeout 15 \
               --probe-concurrency 5 \
@@ -122,9 +124,11 @@ jobs:
       - name: Compute --only FQNs for partial rebuild
         id: only
         if: steps.mode.outputs.mode == 'incremental' && steps.prev.outputs.have_prev == 'true' && steps.changed.outputs.skip == 'false'
+        env:
+          CHANGED_FILES: ${{ steps.changed.outputs.files }}
         run: |
           # Translate "providers/<fqn>/PAY.md" → "<fqn>", comma-joined.
-          ONLY=$(echo "${{ steps.changed.outputs.files }}" | tr ' ' '\n' | \
+          ONLY=$(echo "$CHANGED_FILES" | tr ' ' '\n' | \
             sed -E 's|^providers/(.+)/PAY\.md$|\1|' | grep -v '^$' | paste -sd, -)
           echo "fqns=$ONLY" >> "$GITHUB_OUTPUT"
           echo "Partial rebuild scope: $ONLY"
@@ -147,14 +151,16 @@ jobs:
       # always re-probes every provider.
       - name: Build dist/ (probe-driven)
         if: steps.mode.outputs.mode == 'rebuild' || steps.changed.outputs.skip == 'false'
+        env:
+          ONLY_FQNS: ${{ steps.only.outputs.fqns }}
         run: |
           PARTIAL_ARGS=""
           if [ "${{ steps.mode.outputs.mode }}" = "incremental" ] \
              && [ "${{ steps.prev.outputs.have_prev }}" = "true" ] \
              && [ "${{ steps.changed.outputs.skip }}" = "false" ] \
-             && [ -n "${{ steps.only.outputs.fqns }}" ]; then
-            PARTIAL_ARGS="--only ${{ steps.only.outputs.fqns }} --previous-dist /repo/prev-dist"
-            echo "Mode: incremental (--only ${{ steps.only.outputs.fqns }})"
+             && [ -n "$ONLY_FQNS" ]; then
+            PARTIAL_ARGS="--only $ONLY_FQNS --previous-dist /repo/prev-dist"
+            echo "Mode: incremental (--only $ONLY_FQNS)"
           else
             echo "Mode: full rebuild (every provider re-resolved + re-probed)"
           fi
