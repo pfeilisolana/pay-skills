@@ -29,7 +29,7 @@ Scry exposes Solana wallet-intelligence HTTP routes behind x402 exact USDC payme
 - `GET /x402/wallet/:address/forensics` — $0.05
 - `GET /x402/wallet/:address/quick-flag` — $0.001 micropay canary
 - `GET /x402/solana/pumpfun-risk-protection` — $0.05
-- `GET /x402/mint-risk` — $0.03 beta
+- `GET /x402/mint/{mint}/risk` — $0.03 beta
 - `GET /x402/solana/hot-wallets/daily` — $0.10
 
 ## Honesty caveats (required)
