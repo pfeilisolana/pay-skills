@@ -2,7 +2,7 @@
 name: wallet-intelligence
 title: "Scry Wallet Intelligence"
 description: "Pay-per-request Solana wallet evidence via x402: funding lineage, bundler/private-routing checks, forensics dossiers, Pump.fun cohort context, and mint preflight for agents. No API key."
-use_case: "Use when an agent needs Solana wallet funding lineage, bundler hints, forensics, or Pump.fun/mint risk evidence before acting; start with agent-intel-brief or lineage."
+use_case: "Use when an agent needs Solana wallet funding lineage, bundler hints, forensics, or Pump.fun/mint risk evidence before acting; start with funding lineage (GET /x402/wallet/{address}/lineage); agent-intel-brief secondary."
 category: data
 service_url: https://scry.solanahub.de
 version: v1
