@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { dirname } from "node:path";
 import type { PlanId } from "./plans.js";
+import type { WatchSnapshot } from "../brief/digest-diff.js";
 
 export type EntitlementRecord = {
   telegramUserId: string;
@@ -13,6 +14,9 @@ export type EntitlementRecord = {
   expiresAt?: string;
   activationTx?: string;
   watchlist: string[];
+  lastBriefHtml?: string;
+  lastBriefAt?: string;
+  lastBriefTarget?: string;
 };
 
 export type PaymentRecord = {
@@ -28,10 +32,20 @@ export type ScanCacheRecord = {
   createdAt: string;
 };
 
+export type IntakeLogRecord = {
+  intakeId: string;
+  telegramUserId: string;
+  offerId: string;
+  object?: string;
+  createdAt: string;
+};
+
 type DbShape = {
   entitlements: Record<string, EntitlementRecord>;
   payments: Record<string, PaymentRecord>;
   scanCache: Record<string, ScanCacheRecord>;
+  watchSnapshots: Record<string, WatchSnapshot>;
+  intakes: IntakeLogRecord[];
 };
 
 function monthKey(d = new Date()): string {
@@ -47,6 +61,10 @@ function ensureWatchlist(row: EntitlementRecord): EntitlementRecord {
   return row;
 }
 
+function watchKey(telegramUserId: string, address: string): string {
+  return `${telegramUserId}:${address}`;
+}
+
 export class JsonStore {
   private data: DbShape;
 
@@ -57,9 +75,17 @@ export class JsonStore {
         entitlements: parsed.entitlements ?? {},
         payments: parsed.payments ?? {},
         scanCache: parsed.scanCache ?? {},
+        watchSnapshots: parsed.watchSnapshots ?? {},
+        intakes: parsed.intakes ?? [],
       };
     } else {
-      this.data = { entitlements: {}, payments: {}, scanCache: {} };
+      this.data = {
+        entitlements: {},
+        payments: {},
+        scanCache: {},
+        watchSnapshots: {},
+        intakes: [],
+      };
       this.flush();
     }
   }
@@ -192,8 +218,60 @@ export class JsonStore {
   ): { ok: true; watchlist: string[] } {
     const row = this.getEntitlement(telegramUserId);
     row.watchlist = row.watchlist.filter((a) => a !== address);
+    delete this.data.watchSnapshots[watchKey(telegramUserId, address)];
     this.flush();
     return { ok: true, watchlist: [...row.watchlist] };
+  }
+
+  getWatchSnapshot(
+    telegramUserId: string,
+    address: string,
+  ): WatchSnapshot | undefined {
+    return this.data.watchSnapshots[watchKey(telegramUserId, address)];
+  }
+
+  putWatchSnapshot(
+    telegramUserId: string,
+    snapshot: WatchSnapshot,
+  ): void {
+    this.data.watchSnapshots[watchKey(telegramUserId, snapshot.address)] =
+      snapshot;
+    this.flush();
+  }
+
+  saveLastBrief(
+    telegramUserId: string,
+    opts: { html: string; target: string },
+  ): void {
+    const row = this.getEntitlement(telegramUserId);
+    row.lastBriefHtml = opts.html;
+    row.lastBriefTarget = opts.target;
+    row.lastBriefAt = new Date().toISOString();
+    this.flush();
+  }
+
+  getLastBrief(telegramUserId: string): {
+    html?: string;
+    target?: string;
+    at?: string;
+  } {
+    const row = this.getEntitlement(telegramUserId);
+    return {
+      html: row.lastBriefHtml,
+      target: row.lastBriefTarget,
+      at: row.lastBriefAt,
+    };
+  }
+
+  logIntake(record: Omit<IntakeLogRecord, "createdAt">): void {
+    this.data.intakes.push({
+      ...record,
+      createdAt: new Date().toISOString(),
+    });
+    if (this.data.intakes.length > 500) {
+      this.data.intakes = this.data.intakes.slice(-500);
+    }
+    this.flush();
   }
 
   getCachedBrief(key: string, maxAgeSeconds: number): string | null {
@@ -215,7 +293,6 @@ export class JsonStore {
       brief,
       createdAt: new Date().toISOString(),
     };
-    // Keep cache bounded
     const keys = Object.keys(this.data.scanCache);
     if (keys.length > 200) {
       const sorted = keys

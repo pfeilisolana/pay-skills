@@ -17,8 +17,9 @@ Do build **Planet Council**: edge cards + briefs powered by Scry evidence + mult
 3. **Fail-closed** — Missing credentials never silently mock? Usage only after delivery?  
 4. **Entitlements** — Free/Plus/Pro/watchlist caps match `/api/planet/offers`?  
 5. **Security** — `/activate` contained; HTML escaped; prompt injection resisted?  
-6. **Spend / margin** — Parallel fetches + compact prompts vs $9.99 / $29.99 / $249 dossier?  
-7. **User edge** — Would a careful researcher actually change what they check next after one brief?
+6. **Spend / margin** — Parallel fetches + compact prompts + free coverage/digest vs $9.99 / $29.99 / $249 dossier?  
+7. **User edge** — Would a careful researcher actually change what they check next after one brief?  
+8. **Intake path** — Do `/dossier` and `/upgrade` correctly hit `/api/planet/intake` without inventing checkout?  
 
 ## Non-goals in this PR
 

@@ -131,13 +131,13 @@ export function formatTelegramBrief(opts: {
     parts.push(
       "",
       "<b>Deeper option</b>",
-      "Coverage looks thin for a high-stakes review. Planet offers a Scry Forensics Dossier (~$249, manual intake) when you need analyst-grade lineage/cluster notes — /plans.",
+      "Coverage looks thin for a high-stakes review. File /dossier &lt;address&gt; for a Scry Forensics Dossier (~$249) or /upgrade plus for ongoing deep checks.",
     );
   } else if (card.depth === "shallow") {
     parts.push(
       "",
       "<b>Upgrade path</b>",
-      "Plus/Pro unlocks deep Scry ladder + 3-model council + watchlist. /plans",
+      "Plus/Pro unlocks deep Scry ladder + 3-model council + watchlist digests. /upgrade plus · /plans",
     );
   }
 

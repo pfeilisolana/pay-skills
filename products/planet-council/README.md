@@ -67,24 +67,31 @@ Required env (see `.env.example`):
 
 | Command | Free | Plus/Pro |
 |---|---|---|
-| `/start` | yes | yes |
-| `/scan <mint\|wallet>` | edge card + shallow + 1-model | deep ladder + 3-model |
+| `/coverage <addr>` | **free** cohort/freshness probe (no quota) | yes |
+| `/scan <mint\|wallet>` | auto-detect when indexed + shallow | deep ladder + 3-model |
 | `/wallet <address>` | limited | full forensics path |
 | `/mint <mint>` | limited | launch/mint evidence path |
 | `/connect <a> <b>` | — | pairwise connection evidence |
 | `/deployer <address>` | — | Pro/Founder deployer history |
-| `/watch` `/unwatch` `/watchlist` `/digest` | — | Plus 10 / Pro 50 slots |
+| `/watch` `/unwatch` `/watchlist` | — | Plus 10 / Pro 50 slots |
+| `/digest` | — | **free** coverage deltas (retention) |
+| `/digest deep` | — | paid evidence refresh (uses quota) |
+| `/upgrade plus\|pro\|founder` | files Planet intake | — |
+| `/dossier <addr>` | files ~$249 dossier intake | — |
+| `/case` | files priority case intake | — |
+| `/export` | — | Pro/Founder last-brief export |
 | `/plans` `/usage` | yes | yes |
 | `/activate <tx_sig>` | **disabled** (containment) | admin `/grant` for alpha |
 
 ## Efficiency & margin
 
+- Free `/coverage` + `/digest` keep users engaged without burning Scry USDC or LLM spend.  
 - Parallel Scry deep routes after quick-flag / mint-risk.  
 - Parallel LLM calls (not sequential).  
 - Compact prompts: edge card + truncated route JSON.  
 - 120s scan dedup cache (no double-charge on repeat taps).  
 - Usage counted **only after successful Telegram delivery**.  
-- Soft upsell to $249 Scry Forensics Dossier when coverage is thin.
+- High-margin path: `/dossier` → Planet intake → ~$249 Scry Forensics Dossier.  
 
 ## Status of this package
 
@@ -95,7 +102,11 @@ Required env (see `.env.example`):
 - [x] Telegram bot wiring + watchlist digest  
 - [x] Fail-closed live mode (no silent mock)  
 - [x] SOL `/activate` contained (admin `/grant` only)  
-- [x] Unit tests for parsing / entitlements / edge card / fail-closed  
+- [x] Free coverage probe + auto-detect `/scan`  
+- [x] Planet intake for `/upgrade` `/dossier` `/case`  
+- [x] Watchlist coverage-delta digests (free) + deep refresh  
+- [x] Pro `/export` of last brief  
+- [x] Unit tests for parsing / entitlements / edge card / fail-closed / intake  
 - [ ] Production hosting / secrets  
 - [ ] Live LemonSqueezy / Telegram Stars checkout  
 - [ ] Helius webhook push digests (scheduled)  

@@ -313,3 +313,130 @@ test("council: no models in live mode fails closed", async () => {
   assert.equal(council.ok, false);
   if (!council.ok) assert.equal(council.reason, "no_models");
 });
+
+import {
+  probeCoverage,
+  formatCoverageHtml,
+  suggestScanKind,
+} from "../src/scry/coverage.js";
+import {
+  resolveOfferId,
+  submitPlanetIntake,
+  offerLabel,
+} from "../src/scry/intake.js";
+import {
+  diffWatchSnapshots,
+  snapshotFromProbe,
+  formatDigestDeltaHtml,
+} from "../src/brief/digest-diff.js";
+
+test("plans: pro export entitlement", () => {
+  assert.equal(PLANS.free.exportAllowed, false);
+  assert.equal(PLANS.plus.exportAllowed, false);
+  assert.equal(PLANS.pro.exportAllowed, true);
+});
+
+test("intake: offer aliases resolve", () => {
+  assert.equal(resolveOfferId("plus"), "planet-plus-monthly");
+  assert.equal(resolveOfferId("dossier"), "scry-dossier-standard");
+  assert.equal(resolveOfferId("case"), "scry-case-priority");
+  assert.equal(resolveOfferId("nope"), null);
+  assert.match(offerLabel("scry-dossier-standard"), /249/);
+});
+
+test("intake: mock submit succeeds", async () => {
+  const cfg = loadConfig({ SCRY_MOCK: "1" } as any);
+  const res = await submitPlanetIntake(cfg, {
+    offerId: "scry-dossier-standard",
+    telegramUserId: "42",
+    telegramUsername: "tester",
+    object: "Abc1111111111111111111111111111111111111111",
+    objectType: "wallet",
+  });
+  assert.equal(res.ok, true);
+  if (res.ok) {
+    assert.equal(res.synthetic, true);
+    assert.match(res.intakeId, /^intake_mock_/);
+  }
+});
+
+test("coverage: mock probe + format", async () => {
+  const cfg = loadConfig({ SCRY_MOCK: "1" } as any);
+  const probe = await probeCoverage(
+    cfg,
+    "Abc1111111111111111111111111111111111111111",
+  );
+  assert.equal(probe.ok, true);
+  assert.equal(probe.inCoverage, true);
+  assert.equal(probe.synthetic, true);
+  const html = formatCoverageHtml(probe);
+  assert.match(html, /Coverage probe/);
+  assert.match(html, /no Planet quota/);
+  const kind = await suggestScanKind(
+    cfg,
+    "Abc1111111111111111111111111111111111111111",
+  );
+  assert.equal(kind, "wallet");
+});
+
+test("digest diff: detects coverage changes", () => {
+  const prev = {
+    address: "A",
+    inCoverage: true,
+    coverageStatus: "deep",
+    confidenceBand: "HIGH",
+    dimensionStatuses: { activity: "fresh", identity: "stale" },
+    capturedAt: "2026-09-22T00:00:00Z",
+  };
+  const next = {
+    address: "A",
+    inCoverage: true,
+    coverageStatus: "partial",
+    confidenceBand: "MID",
+    dimensionStatuses: { activity: "stale", identity: "stale" },
+    capturedAt: "2026-09-23T00:00:00Z",
+  };
+  const delta = diffWatchSnapshots(prev, next);
+  assert.equal(delta.firstSeen, false);
+  assert.ok(delta.changes.some((c) => /Coverage/.test(c)));
+  assert.ok(delta.changes.some((c) => /activity/.test(c)));
+  const first = diffWatchSnapshots(undefined, next);
+  assert.equal(first.firstSeen, true);
+  const html = formatDigestDeltaHtml([delta, first]);
+  assert.match(html, /Watchlist digest/);
+});
+
+test("store: watch snapshots + last brief + intake log", () => {
+  const dir = mkdtempSync(join(tmpdir(), "planet-council-"));
+  const store = new JsonStore(join(dir, "db.json"));
+  store.grant("9", "plus");
+  store.addWatch("9", "Abc1111111111111111111111111111111111111111", 10);
+  const snap = snapshotFromProbe({
+    address: "Abc1111111111111111111111111111111111111111",
+    ok: true,
+    inCoverage: true,
+    coverageStatus: "deep",
+    confidenceBand: "HIGH",
+    synthetic: true,
+    dimensions: [{ name: "activity", status: "fresh" }],
+  });
+  store.putWatchSnapshot("9", snap);
+  assert.equal(
+    store.getWatchSnapshot("9", "Abc1111111111111111111111111111111111111111")
+      ?.coverageStatus,
+    "deep",
+  );
+  store.saveLastBrief("9", { html: "<b>hi</b>", target: "Abc" });
+  assert.equal(store.getLastBrief("9").html, "<b>hi</b>");
+  store.logIntake({
+    intakeId: "intake_x",
+    telegramUserId: "9",
+    offerId: "scry-dossier-standard",
+    object: "Abc",
+  });
+  store.removeWatch("9", "Abc1111111111111111111111111111111111111111");
+  assert.equal(
+    store.getWatchSnapshot("9", "Abc1111111111111111111111111111111111111111"),
+    undefined,
+  );
+});

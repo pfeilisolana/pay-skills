@@ -39,11 +39,14 @@ planet-council bot (this package)
    - `pumpfun/launch-dossier`
    - `deployer-summary` when creator wallet present  
 
-### Pair / deployer / digest
+### Pair / deployer / digest / intake
 
 - `/connect` → `GET /x402/wallet/connection`  
 - `/deployer` → `GET /x402/deployer-summary`  
-- `/digest` → `watchlist-snapshot` or parallel quick-flags  
+- `/coverage` → free `GET /x402/coverage/{address}` (no Planet quota)  
+- `/digest` → free coverage deltas vs last snapshot  
+- `/digest deep` → `watchlist-snapshot` or parallel quick-flags (quota)  
+- `/upgrade` `/dossier` `/case` → `POST /api/planet/intake`  
 
 ## Edge card contract
 

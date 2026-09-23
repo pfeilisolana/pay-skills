@@ -11,6 +11,7 @@ export type PlanLimits = {
   connectAllowed: boolean;
   deployerAllowed: boolean;
   digestAllowed: boolean;
+  exportAllowed: boolean;
   priceUsd: number;
 };
 
@@ -26,6 +27,7 @@ export const PLANS: Record<PlanId, PlanLimits> = {
     connectAllowed: false,
     deployerAllowed: false,
     digestAllowed: false,
+    exportAllowed: false,
     priceUsd: 0,
   },
   plus: {
@@ -38,6 +40,7 @@ export const PLANS: Record<PlanId, PlanLimits> = {
     connectAllowed: true,
     deployerAllowed: false,
     digestAllowed: true,
+    exportAllowed: false,
     priceUsd: 9.99,
   },
   pro: {
@@ -50,6 +53,7 @@ export const PLANS: Record<PlanId, PlanLimits> = {
     connectAllowed: true,
     deployerAllowed: true,
     digestAllowed: true,
+    exportAllowed: true,
     priceUsd: 29.99,
   },
   founder: {
@@ -62,6 +66,7 @@ export const PLANS: Record<PlanId, PlanLimits> = {
     connectAllowed: true,
     deployerAllowed: true,
     digestAllowed: true,
+    exportAllowed: true,
     priceUsd: 99,
   },
 };
