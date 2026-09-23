@@ -7,14 +7,24 @@
     "contact": {
       "email": "michaelpfeilschifter@gmail.com"
     },
-    "description": "Scry is a Solana wallet intelligence API, paid per request via x402 — an evidence suite for agents that need wallet, mint, funding-lineage, transfer, and cohort context before applying their own monitoring or classification policies. Low-cost entry calls start at $0.001 (wallet quick-flag) through $0.01-$0.10 for bundler checks, mint preflight, Pump.fun cohort screening, and funding lineage before deeper dossiers. Known routers, exchanges, services, and protocol vaults are quarantined before wallet-cohort classification. Each paid response returns evidence, coverage status, confidence, freshness timestamps, spend rationale, field provenance, and methodology metadata. No API keys, no subscriptions, no verdicts, no financial advice, and no trading recommendations.\n\nAll paid endpoints use x402 v2 PAYMENT-SIGNATURE. X-PAYMENT is a legacy v1 compatibility alias; clients must send only one payment header. Public discovery surfaces require no payment.",
+    "description": "Scry is a Solana wallet intelligence API paid per request via x402 — evidence for agents that need funding lineage / source-of-funds, bundler/private-routing checks, single-wallet forensics dossiers, Pump.fun cohorts, mint preflight, and deployer history before applying their own policy. No API keys, no subscriptions, no trading verdicts. Start free at /x402/index.json and /x402/coverage/{address}; lowest paid entry is GET /x402/wallet/{address}/quick-flag ($0.001). Compete on lineage depth, not smart-money rankings. Prefer Birdeye/Vybe/Nansen for spot price or ranked flows.",
     "x-logo": {
       "url": "https://scry.solanahub.de/x402/assets/scry-wallet-intelligence-512.png",
       "altText": "Scry Wallet Intelligence"
     },
     "x-provider": "Scry",
-    "x-guidance": "Paid Scry routes require x402 v2 PAYMENT-SIGNATURE (exact USDC). First convert SKU: GET /x402/wallet/{address}/lineage ($0.03). Secondary: GET /x402/solana/agent-intel-brief or GET /x402/wallet/{address}/quick-flag. Free discovery: /openapi.json, /x402/products.json, /.well-known/x402. Responses are evidence-only; trust per-response freshness fields and live /x402/freshness-sla.json for aggregate SLA (fresh when stale_count=0); coverage may still be yellow. Not financial advice.",
-    "x-full-spec-url": "https://scry.solanahub.de/openapi-full.json"
+    "x-guidance": "Paid Scry routes require x402 v2 PAYMENT-SIGNATURE (exact USDC on Solana + Base). Free first: /x402/products.json, /x402/workflows.json, /x402/coverage/{address}, intent pages under /x402/discovery/*. First convert SKU: GET /x402/wallet/{address}/quick-flag ($0.001). Source-of-funds: GET /x402/wallet/{address}/lineage ($0.03). Bundler/private-routing: GET /x402/wallet/{address}/bundler-check ($0.01). One-wallet dossier: GET /x402/wallet/{address}/forensics ($0.05). Escalate only when coverage gaps require it; higher price ≠ new coverage. Buyer phrases: solana wallet funding lineage api; solana wallet source of funds evidence; solana wallet bundler private routing evidence; solana wallet evidence dossier api; pumpfun wallet cohort evidence; solana memecoin mint risk preflight; agent orchestrator solana wallet intelligence.",
+    "x-full-spec-url": "https://scry.solanahub.de/openapi-full.json",
+    "x-agent-discovery": {
+      "primary_language": "en",
+      "start_here": "https://scry.solanahub.de/x402/index.json",
+      "buyer_intent_index": "https://solanahub.de/scry-buyer-intent-index.json",
+      "mcp_install": "npx -y scry-mcp@latest",
+      "skill_install": "npx skills add pfeilisolana/scry-skills --skill scry-wallet-intelligence",
+      "llms_txt": "https://scry.solanahub.de/llms.txt",
+      "agents_txt": "https://scry.solanahub.de/agents.txt",
+      "posture": "evidence_only"
+    }
   },
   "servers": [
     {
@@ -41,7 +51,7 @@
         "tags": [
           "discovery"
         ],
-        "summary": "Health check",
+        "summary": "Fetch Scry service health for uptime probes",
         "responses": {
           "200": {
             "description": "Service health"
@@ -55,7 +65,7 @@
         "tags": [
           "discovery"
         ],
-        "summary": "This OpenAPI document (slim; ?full=1 for the complete spec)",
+        "summary": "Fetch the Scry OpenAPI document (slim or full)",
         "responses": {
           "200": {
             "description": "OpenAPI 3.1 document"
@@ -69,7 +79,7 @@
         "tags": [
           "discovery"
         ],
-        "summary": "Complete OpenAPI document with full schemas and examples",
+        "summary": "Fetch complete OpenAPI document with full schemas and examples",
         "responses": {
           "200": {
             "description": "OpenAPI 3.1 document"
@@ -84,7 +94,7 @@
           "offers",
           "discovery"
         ],
-        "summary": "Planet Solana app and Scry Forensics package catalog",
+        "summary": "Fetch Planet Solana and Scry dossier offers",
         "description": "Free machine-readable offer catalog for Planet Solana Wallet Watch and Scry Forensics dossier packages. Paid tiers report checkout readiness without exposing paid data.",
         "responses": {
           "200": {
@@ -100,7 +110,7 @@
           "offers",
           "discovery"
         ],
-        "summary": "Planet Solana manual intake contract",
+        "summary": "Fetch Planet Solana manual intake contract",
         "description": "Free machine-readable contract for manual access and dossier requests while automated checkout is being configured.",
         "responses": {
           "200": {
@@ -113,7 +123,7 @@
         "tags": [
           "offers"
         ],
-        "summary": "Submit a Planet Solana or Scry manual intake request",
+        "summary": "Fetch submit Planet Solana or Scry dossier intake request",
         "description": "Append-only local intake for access and dossier requests. This creates no demand claim and returns no paid evidence.",
         "requestBody": {
           "required": true,
@@ -263,7 +273,7 @@
         "tags": [
           "discovery"
         ],
-        "summary": "Aggregate Scry coverage snapshot",
+        "summary": "Fetch aggregate Scry wallet coverage snapshot",
         "responses": {
           "200": {
             "description": "Coverage snapshot"
@@ -277,7 +287,7 @@
         "tags": [
           "discovery"
         ],
-        "summary": "Operational evidence packet for external Bazaar and Buyer Search reindex review",
+        "summary": "Fetch Bazaar buyer-search reindex evidence packet",
         "responses": {
           "200": {
             "description": "Reindex evidence packet"
@@ -291,7 +301,7 @@
         "tags": [
           "discovery"
         ],
-        "summary": "Machine-readable freshness targets for Scry evidence dimensions",
+        "summary": "Fetch Scry evidence freshness SLA targets",
         "responses": {
           "200": {
             "description": "Freshness SLA"
@@ -305,7 +315,7 @@
         "tags": [
           "discovery"
         ],
-        "summary": "Machine-readable degraded response and error contract",
+        "summary": "Fetch Scry degraded-response and error contract",
         "responses": {
           "200": {
             "description": "Error contract"
@@ -319,7 +329,7 @@
         "tags": [
           "discovery"
         ],
-        "summary": "Machine-readable field methodology and provenance policy",
+        "summary": "Fetch Scry field methodology and provenance policy",
         "responses": {
           "200": {
             "description": "Methodology manifest"
@@ -333,7 +343,7 @@
         "tags": [
           "discovery"
         ],
-        "summary": "Agent workflow catalog for job-based Scry endpoint selection",
+        "summary": "Fetch Scry agent workflows for endpoint selection",
         "responses": {
           "200": {
             "description": "Workflow catalog"
@@ -347,7 +357,7 @@
         "tags": [
           "discovery"
         ],
-        "summary": "Single Scry workflow routing plan",
+        "summary": "Fetch one Scry workflow routing plan by id",
         "parameters": [
           {
             "name": "workflow",
@@ -355,7 +365,9 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "Workflow id from /x402/workflows.json (e.g. wallet-triage)",
+            "example": "wallet-triage"
           }
         ],
         "responses": {
@@ -374,13 +386,14 @@
         "tags": [
           "discovery"
         ],
-        "summary": "Buyer-intent discovery page for Solana wallet funding lineage and source-of-funds queries",
+        "summary": "Fetch funding-lineage buyer-intent discovery page",
         "responses": {
           "200": {
             "description": "Wallet lineage buyer-intent routing page"
           }
         },
-        "security": []
+        "security": [],
+        "description": "Free buyer-intent discovery page for Solana wallet funding lineage / source-of-funds queries. Routes agents to GET /x402/wallet/{address}/lineage before payment. Not a paid evidence product."
       }
     },
     "/x402/discovery/pumpfun-risk-protection": {
@@ -388,13 +401,14 @@
         "tags": [
           "discovery"
         ],
-        "summary": "Buyer-intent discovery page for Pump.fun wallet-cohort risk-screen queries",
+        "summary": "Fetch Pump.fun cohort buyer-intent discovery page",
         "responses": {
           "200": {
             "description": "Pump.fun risk-protection buyer-intent routing page"
           }
         },
-        "security": []
+        "security": [],
+        "description": "Free buyer-intent discovery page for Pump.fun wallet-cohort / serial-deployer queries. Routes agents to GET /x402/solana/pumpfun-risk-protection before payment."
       }
     },
     "/x402/discovery/mint-risk": {
@@ -402,13 +416,14 @@
         "tags": [
           "discovery"
         ],
-        "summary": "Buyer-intent discovery page for one-mint risk preflight and holder-concentration queries",
+        "summary": "Fetch mint-risk buyer-intent discovery page",
         "responses": {
           "200": {
             "description": "Mint-risk buyer-intent routing page"
           }
         },
-        "security": []
+        "security": [],
+        "description": "Free buyer-intent discovery page for one-mint risk preflight queries. Routes agents to GET /x402/mint/{mint}/risk before payment."
       }
     },
     "/x402/discovery/wallet-lineage.html": {
@@ -416,13 +431,14 @@
         "tags": [
           "discovery"
         ],
-        "summary": "Human-readable HTML landing page for Solana wallet funding lineage buyer intent",
+        "summary": "Fetch HTML funding-lineage buyer-intent landing",
         "responses": {
           "200": {
             "description": "Wallet lineage HTML discovery page"
           }
         },
-        "security": []
+        "security": [],
+        "description": "Free buyer-intent discovery page for Solana wallet funding lineage / source-of-funds queries. Routes agents to GET /x402/wallet/{address}/lineage before payment. Not a paid evidence product."
       }
     },
     "/x402/discovery/pumpfun-risk-protection.html": {
@@ -430,13 +446,14 @@
         "tags": [
           "discovery"
         ],
-        "summary": "Human-readable HTML landing page for Pump.fun risk-protection buyer intent",
+        "summary": "Fetch HTML Pump.fun cohort buyer-intent landing",
         "responses": {
           "200": {
             "description": "Pump.fun risk-protection HTML discovery page"
           }
         },
-        "security": []
+        "security": [],
+        "description": "Free buyer-intent discovery page for Pump.fun wallet-cohort / serial-deployer queries. Routes agents to GET /x402/solana/pumpfun-risk-protection before payment."
       }
     },
     "/x402/discovery/mint-risk.html": {
@@ -444,13 +461,14 @@
         "tags": [
           "discovery"
         ],
-        "summary": "Human-readable HTML landing page for mint-risk buyer intent",
+        "summary": "Fetch HTML mint-risk buyer-intent landing",
         "responses": {
           "200": {
             "description": "Mint-risk HTML discovery page"
           }
         },
-        "security": []
+        "security": [],
+        "description": "Free buyer-intent discovery page for one-mint risk preflight queries. Routes agents to GET /x402/mint/{mint}/risk before payment."
       }
     },
     "/x402/example/{example}": {
@@ -458,7 +476,7 @@
         "tags": [
           "discovery"
         ],
-        "summary": "Free example fixture for a paid Scry response contract",
+        "summary": "Fetch example fixture for a Scry response contract",
         "parameters": [
           {
             "name": "example",
@@ -466,7 +484,9 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "Example fixture id from the discovery catalog",
+            "example": "wallet-lineage"
           }
         ],
         "responses": {
@@ -492,7 +512,7 @@
           "solana-x402-data-marketplace",
           "agent-product"
         ],
-        "summary": "Low-cost daily notable-wallet cohort with cluster tags and coverage. Cohort shortlist, not one-wallet transfer tape.",
+        "summary": "Fetch daily notable Solana wallet cohort shortlist",
         "description": "Low-cost daily Solana notable-wallet cohort for autonomous agents. Returns today's ranked cohort shortlist, pre-filtered against known routers, exchanges, services, and vaults. Each wallet includes source-rank context, Scry coverage gaps, cluster tags, missing dimensions, and a credit-aware depth-call plan before single-wallet forensics. Use for daily discovery and routing. Not for one-wallet transaction rows; use Wallet Transfer Tape for that object. No API keys, no subscriptions; x402 exact payment per request. Search aliases: find active solana memecoin trader wallets daily; low cost daily solana wallet shortlist; low cost solana wallet discovery; daily solana hot wallet cohort; today notable solana wallet shortlist; cohort daily wallet cohort; cohort 24h wallet shortlist api; solana wallet candidates for agents. Primary object: low cost daily wallet discovery.\n\nPrice: $0.10. Requires x402 exact payment.",
         "parameters": [],
         "requestBody": {
@@ -680,7 +700,7 @@
           "solana-x402-data-marketplace",
           "agent-product"
         ],
-        "summary": "Low-cost weekly persistence cohort; separates daily noise from recurring patterns.",
+        "summary": "Fetch weekly persistent Solana wallet cohort shortlist",
         "description": "Low-cost weekly persistence cohort for agents that need lower-noise recurring wallets before deeper wallet forensics. Includes daily-overlap context, Scry coverage gaps, missing dimensions, and a deeper analysis ladder for caller-defined monitoring and research workflows. No API keys, no subscriptions; x402 exact payment per request. Search aliases: cohort 7d persistent solana wallets; low cost weekly solana wallet persistence; find persistent solana memecoin trader wallets weekly; weekly persistent solana wallet cohort; recurring solana wallet shortlist; cohort 7d wallet persistence cohort; cohort 7d wallet persistence api; solana wallet persistence for agents. Primary object: low cost weekly wallet persistence.\n\nPrice: $0.20. Requires x402 exact payment.",
         "parameters": [],
         "requestBody": {
@@ -876,7 +896,7 @@
           "solana-x402-data-marketplace",
           "agent-product"
         ],
-        "summary": "Low-cost Pump.fun rugger and serial-deployer wallet-cohort screen. No verdict.",
+        "summary": "Fetch Pump.fun rugger serial-deployer wallet cohort",
         "description": "Low-cost Pump.fun wallet-cohort screen for agents that need rugger-pattern, serial-deployer, service-router, and suspicious-activity context before deeper review. Returns identity, activity, coverage, and sample evidence for wallet cohorts and deployer sets. Use for cohorts, not one mint, one launch, or one wallet. Evidence only; no verdict. No API keys, no subscriptions; x402 exact payment per request. Search aliases: pumpfun risk protection solana; pumpfun rugger wallet detection; pumpfun serial deployer wallet api; pump.fun rugger wallet detection; pump.fun serial deployer wallets; pumpfun risk wallet cohort; pumpfun wallet cohort risk screen; pumpfun deployer risk screen. Primary object: low cost pumpfun wallet cohort screen.\n\nPrice: $0.05. Requires x402 exact payment.",
         "parameters": [
           {
@@ -888,7 +908,9 @@
               "minimum": 1,
               "maximum": 100,
               "default": 50
-            }
+            },
+            "description": "Max cohort wallets to return (typical 10-50; server may cap)",
+            "example": 50
           }
         ],
         "responses": {
@@ -1083,7 +1105,7 @@
           "onchain-plan",
           "agent-product"
         ],
-        "summary": "Low-cost agent orchestrator wallet-intel spend-router: freshness, coverage gaps, product ladder.",
+        "summary": "Fetch agent orchestrator brief for next Scry route",
         "description": "Agent orchestrator Solana wallet intelligence brief and low-cost spend-router for autonomous agents deciding which Scry endpoint or onchain depth workflow to request next. Combines 24h/7d wallet context, DB freshness, refresh queue, coverage gaps, product-ladder routing, and next evidence depth in one response. Use when the object is an agent workflow. Not a single-wallet bundler/private-routing check. No API keys, no subscriptions; x402 exact payment per request. Search aliases: agent orchestrator solana wallet intelligence; which scry endpoint should my agent select; solana agent spend router; agent orchestrator solana wallet intelligence api; which scry endpoint should my agent request next; low cost solana agent wallet intelligence router; scry agent orchestrator spend router; solana wallet intelligence spend router. Primary object: agent spend router.\n\nPrice: $0.03. Requires x402 exact payment.",
         "parameters": [],
         "requestBody": {
@@ -1272,7 +1294,7 @@
           "x402-data-broker",
           "solana-x402-data-marketplace"
         ],
-        "summary": "Sub-cent ($0.001) Solana wallet flag check and x402 micropayment test target: quarantine, bundler hint, identity, freshness.",
+        "summary": "Fetch one Solana wallet with sub-cent quick-flag",
         "description": "A $0.001 x402 call — the lowest-price endpoint in this catalog and a practical first target to test a real USDC micropayment end-to-end. Returns service-quarantine status, bundler-routing hint, known identity, coverage status, cached transfer freshness, and stale-vs-DB marker for any Solana wallet. Built for agents bulk-screening before paying for deeper wallet evidence, and for x402 clients that want a working sub-cent settlement test against a live API. No API keys, no subscriptions; x402 exact payment per request.\n\nPrice: $0.001. Requires x402 exact payment.",
         "parameters": [
           {
@@ -1520,7 +1542,7 @@
           "x402-data-broker",
           "solana-x402-data-marketplace"
         ],
-        "summary": "Canonical per-tx SOL PnL from validator pre/postBalances (never estimated; honest null when not computable).",
+        "summary": "Fetch canonical per-tx SOL PnL evidence for a wallet",
         "description": "Per-transaction SOL PnL for one Solana wallet from validator pre/postBalances — never estimated or price-derived (that data source is verified to the lamport). Returns an explicit null + reason when the number is not computable, the wallet is multi-asset, or a large PnL sits on a now-empty wallet (withheld as unverifiable pending the chain-anchored recompute — equally a real winner who withdrew or a flow artifact, NOT judged fake). NOTE: whole-lifetime chain-anchored verification is being hardened — the served number is currently internal-consistency-checked, NOT yet certified against the on-chain lifetime balance delta (sol_pnl_chain_anchored=false). Includes trade count, classification, coverage, and freshness. No API keys, no subscriptions; x402 exact payment per request.\n\nPrice: $0.002. Requires x402 exact payment.",
         "parameters": [
           {
@@ -1711,7 +1733,7 @@
           "x402-data-broker",
           "solana-x402-data-marketplace"
         ],
-        "summary": "Is this Solana wallet a bundler? Private-routing evidence check before deeper forensics.",
+        "summary": "Fetch Solana wallet bundler private-routing evidence",
         "description": "Is this Solana wallet a bundler? Single-wallet bundler and private-routing evidence check. Detects whether one wallet routes through Jito, Nozomi, BloXroute, ZeroSlot, BlockRazor, NextBlock, Astralane, or onchain Sender. Returns routing-pattern evidence, tip-stack counts, service-quarantine status, and coverage warnings before deeper wallet forensics. Not an agent orchestrator brief. No API keys, no subscriptions; x402 exact payment per request. Search aliases: solana wallet private routing detection; solana wallet bundler detection api; x402 solana bundler check; one cent solana wallet bundler check; low cost solana private routing evidence; jito tip service wallet evidence; solana wallet jito nozomi bloxroute check; solana jito wallet check. Primary object: low cost single wallet precheck.\n\nPrice: $0.01. Requires x402 exact payment.",
         "parameters": [
           {
@@ -2011,7 +2033,7 @@
           "x402-data-broker",
           "solana-x402-data-marketplace"
         ],
-        "summary": "What is this Solana wallet's forensic profile? Evidence dossier: identity, pattern context, coverage, freshness.",
+        "summary": "Fetch Solana wallet evidence dossier and coverage",
         "description": "What is the on-chain forensic profile of this Solana wallet? Single-wallet evidence dossier API for agents that need one wallet in depth. Returns identity and X/Twitter-handle hints when available, service/router/exchange quarantine, funding-source lineage, cached transaction evidence, SOL-flow graph, coordination peers, cluster membership, rug-evidence flags, sniper/MEV/bundler pattern context, current activity, holdings snapshot when covered, coverage confidence, and source freshness timestamps. Use when the object is one Solana wallet. Not for token-launch dossiers, daily wallet cohorts, or transfer-only tapes. Evidence context only; caller owns policy decisions. No API keys or subscriptions; x402 exact payment per request. Search aliases: solana wallet evidence dossier; solana wallet to twitter handle; solana wallet to twitter handle reverse lookup; solana wallet evidence dossier api; full solana wallet evidence dossier; one wallet solana evidence dossier; solana wallet forensic dossier; solana wallet x handle lookup api. Primary object: single wallet dossier.\n\nPrice: $0.05. Requires x402 exact payment.",
         "parameters": [
           {
@@ -2441,7 +2463,7 @@
           "x402-data-broker",
           "solana-x402-data-marketplace"
         ],
-        "summary": "Who funded this Solana wallet? Funding-lineage evidence: upstream funders, freshness, confidence.",
+        "summary": "Fetch Solana wallet funding lineage source of funds",
         "description": "Who funded this Solana wallet, and where did its funds come from? Cache-first funding-lineage evidence API returns known upstream funders, hop depth, source freshness, identity hints, loop detection, and coverage/confidence without forcing a live onchain refresh per request. Built for wallet provenance, source-of-funds review, counterparty review, risk triage, and paid Globe wallet dossiers. No API keys, no subscriptions; x402 exact payment per request. Search aliases: wallet source of funds solana api; solana funding lineage api; who funded this solana wallet; solana wallet funding lineage api; solana wallet lineage api; solana source of funds api; solana wallet provenance api; wallet funder lookup solana. Primary object: single wallet source of funds.\n\nPrice: $0.03. Requires x402 exact payment.",
         "parameters": [
           {
@@ -2657,7 +2679,7 @@
           "x402-data-broker",
           "solana-x402-data-marketplace"
         ],
-        "summary": "Are these two Solana wallets connected? Pairwise evidence: direct edges, funding lineage, shared counterparties, community co-membership, token overlap.",
+        "summary": "Fetch pairwise Solana wallet connection evidence",
         "description": "Are these two Solana wallets connected on-chain? Pairwise wallet connection evidence API for agents that need to know whether two specific wallets are linked. Takes two wallet addresses and returns typed evidence blocks: direct transfer and swap-counterparty edges between the pair with direction and observed volume, funding-lineage comparison with terminal-funder match, shared transfer counterparties ranked by observed SOL volume with infrastructure flags, graph-community co-membership from network clustering, and traded-token overlap with Jaccard score. Every block carries its own computed_at timestamp and coverage status; wallets outside the covered transfer universe return explicit nulls instead of fabricated negatives. Use when the object is a PAIR of wallets. Not for single-wallet dossiers, token-launch analysis, or bulk cohort scans. Evidence context only; caller owns interpretation and policy decisions. No API keys or subscriptions; x402 exact payment per request.\n\nPrice: $0.04. Requires x402 exact payment.",
         "parameters": [
           {
@@ -2907,7 +2929,7 @@
           "x402-data-broker",
           "solana-x402-data-marketplace"
         ],
-        "summary": "Fresh Solana wallet transfers for one wallet: transfer rows, counterparties, mints, freshness.",
+        "summary": "Fetch fresh Solana wallet transfer tape for one address",
         "description": "Fresh Solana wallet transfers for one wallet. Returns one-wallet transfer rows as the live evidence tape: deduplicated activity, exact organization/service counterparty context across the cached history, in/out direction counts, mints touched, local edge-gap reconciliation, and freshness timestamps. Use for one wallet's latest transfer evidence before deeper forensics or graph refresh. Not a daily hot-wallet cohort and not a ranked wallet shortlist. No API keys, no subscriptions; x402 exact payment per request. Search aliases: fresh solana wallet transfers; wallet activity feed solana; solana wallet transfer tape; fresh solana wallet transfers x402; what happened to this wallet today; solana wallet transfer tape x402; solana wallet transfers api; solana wallet transfer history x402. Primary object: single wallet fresh activity.\n\nPrice: $0.15. Requires x402 exact payment.",
         "parameters": [
           {
@@ -3215,7 +3237,7 @@
           "x402-data-broker",
           "solana-x402-data-marketplace"
         ],
-        "summary": "Did this wallet trade in the launch window with related wallets? Relationship + cluster evidence, no verdict.",
+        "summary": "Fetch launch-window cluster coordination peer evidence",
         "description": "Did this wallet trade inside the token launch window together with related wallets? Returns relationship evidence for one Solana wallet in a launch/high-activity context: its chain-normalized transfer counterparties, private-routing and bundler context, repeat-cluster patterns, identity tags when indexed, and local edge-gap reconciliation. NOTE: this is the wallet's counterparty + cluster evidence, NOT a verified same-block co-execution set. Evidence layer only; no verdict or action instruction. No API keys, no subscriptions; x402 exact payment per request. Search aliases: solana launch block cluster; solana launch block cluster x402; same block solana launch wallets; same block solana wallet cluster; solana memecoin launch coordination evidence; bundler routed wallets in launch window; solana launch window cluster api; launch window cluster x402. Primary object: specialized solana evidence call.\n\nPrice: $0.05. Requires x402 exact payment.",
         "parameters": [
           {
@@ -3590,7 +3612,7 @@
           "x402-data-broker",
           "solana-x402-data-marketplace"
         ],
-        "summary": "Edge-gap-first Solana wallet evidence: measures what a single-call lookup misses, then bundles forensics, multi-hop funding lineage, transfers, and identity.",
+        "summary": "Fetch edge-gap wallet forensics lineage transfer bundle",
         "description": "Edge-gap reconciliation first: measures how many of a Solana wallet's real transfer counterparties are missing from any single-call view (edge_gap_ratio, missing_local_edge_count) — the coverage gap a one-shot onchain/RPC lookup leaves behind — then fuses Scry wallet forensics, multi-hop funding lineage, launch-window relationship evidence, identity quarantine, KOL X-handle when available, and coverage/provenance/freshness timestamps into one composite response. Neutral evidence only, no verdicts; built for research, monitoring, and orchestrator agents that need to see what a single lookup would miss before caller-owned policy decisions. No API keys, no subscriptions; x402 exact payment per request.\n\nPrice: $0.18. Requires x402 exact payment.",
         "parameters": [
           {
@@ -4032,7 +4054,7 @@
           "x402-data-broker",
           "solana-x402-data-marketplace"
         ],
-        "summary": "Return live Solana priority-fee estimates for transaction-building agents.",
+        "summary": "Fetch live Solana priority-fee estimates for builders",
         "description": "Return live Solana priority-fee estimates from onchain for global, Jupiter, Raydium, or caller-supplied account keys. Includes all fee levels in micro-lamports per compute unit, freshness, coverage, and caller-policy caveats for transaction-building agents that need a low-cost execution-cost snapshot before submit or simulation. No API keys, no subscriptions; x402 exact payment per request.\n\nPrice: $0.005. Requires x402 exact payment.",
         "parameters": [
           {
@@ -4308,7 +4330,7 @@
           "x402-data-broker",
           "solana-x402-data-marketplace"
         ],
-        "summary": "Return a multi-wallet cached transfer-evidence + freshness snapshot (paid poll), no webhook setup.",
+        "summary": "Fetch multi-wallet watchlist freshness snapshot (max 25)",
         "description": "Multi-wallet (up to 25) cached transfer-evidence snapshot via paid pull: no webhook subscription, no callback URL, no delivery infrastructure. Scry summarizes cached chain-normalized transfer-freshness timestamps, local edge-gap evidence, coverage status, and drill-down routes so autonomous agents can poll a watchlist. NOTE: serves indexed/cached evidence with per-wallet freshness stamps — it is NOT a live or streaming feed. No API keys, no subscriptions; x402 exact payment per request.\n\nPrice: $0.05. Requires x402 exact payment.",
         "parameters": [
           {
@@ -4565,7 +4587,7 @@
           "x402-data-broker",
           "solana-x402-data-marketplace"
         ],
-        "summary": "[BETA] One Pump.fun mint dossier: creator, holder, launch-window, and cache-only entity-link evidence. Not a wallet cohort.",
+        "summary": "Fetch Pump.fun one-mint launch dossier evidence",
         "description": "[BETA] One Pump.fun or memecoin mint/launch dossier: creator context, launch-window evidence, holder context, private-routing evidence, liquidity context, and a cache-only launch-slot Token Control Map with explicit partial coverage. The Token Control layer reuses the finalized current-supply evidence already requested by mint risk, adds no provider call, and withholds percentages when that slot-bound denominator is unavailable. Current supply is not represented as historical launch-slot supply. Use when the object is one mint or launch. Evidence only; no verdict. No API keys, no subscriptions; x402 exact payment per request.\n\nPrice: $0.30. Requires x402 exact payment.",
         "parameters": [
           {
@@ -4788,7 +4810,7 @@
           "x402-data-broker",
           "solana-x402-data-marketplace"
         ],
-        "summary": "[BETA] One-mint risk preflight: rug evidence + holder concentration, no verdict.",
+        "summary": "Fetch Solana mint risk preflight holder and creator context",
         "description": "[BETA] Low-cost Pump.fun or memecoin mint preflight for autonomous agents. Use when the object is one Solana mint and the caller needs rug-evidence context, holder concentration, creator context, and missing-field coverage before escalating to a launch dossier or wallet forensics. Returns rug-heuristic evidence, holder-concentration proxy, top-holder exit-pressure context, dev-wallet activity, token age, liquidity coverage, creator context, checked/unchecked sources, and missing fields. Evidence only; no verdict. No API keys, no subscriptions; x402 exact payment per request. Search aliases: x402 solana mint risk; three cent solana mint risk preflight; solana memecoin rug evidence; solana memecoin holder concentration check; solana rug check api; solana rug evidence preflight; low cost solana token holder preflight; low cost mint rug preflight. Primary object: low cost single mint preflight.\n\nPrice: $0.03. Requires x402 exact payment.",
         "parameters": [
           {
@@ -5133,7 +5155,7 @@
           "evidence-only",
           "x402-data-broker"
         ],
-        "summary": "Deployer quick check: reported history plus transaction-anchored launches and matched ATH outcomes.",
+        "summary": "Fetch Solana deployer launch-history evidence summary",
         "description": "Fast cached Solana deployer track record for one wallet: provider-reported project history plus separately labeled transaction-anchored launches, matched ATH outcomes, coverage, and quality. No related-wallet expansion, live provider request, identity claim, wrongdoing label, or trading verdict. No API keys, no subscriptions; x402 exact payment per request.\n\nPrice: $0.39. Requires x402 exact payment.",
         "parameters": [
           {

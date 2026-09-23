@@ -115,7 +115,9 @@ Required env (see `.env.example`):
 
 This lives in `pay-skills` so reviewers can see:
 
-1. `providers/scry/wallet-intel/` — Scry listed for agents via pay catalog  
-2. `products/planet-council/` — human monetization path on top of Scry  
+1. `providers/scry/wallet-intel/` — Scry listed for agents via pay catalog (agent SEO)  
+2. `products/scry-agent-seo/` — Bazaar / x402 discovery playbook + Codex handoff  
+3. `products/planet-council/` — human monetization path on top of Scry  
 
-Codex owns the separate Scry API release. Do not change Scry’s evidence contract here.
+Codex owns the separate Scry API release. Do not change Scry’s evidence contract here —
+except via the documented P0 handoff for `resource.description` on 402 challenges.
