@@ -2,3 +2,9 @@ dist/
 index.json
 skills.json
 /.DS_Store
+
+# Planet Council local artifacts
+products/planet-council/node_modules/
+products/planet-council/data/
+products/planet-council/dist/
+products/planet-council/.env
