@@ -15,6 +15,9 @@ async function main() {
             "TELEGRAM_BOT_TOKEN not set. Package is ready for review; export token to run the bot.",
           scryBaseUrl: cfg.SCRY_BASE_URL,
           mock: cfg.SCRY_MOCK,
+          note: cfg.SCRY_MOCK
+            ? "SCRY_MOCK=1 → synthetic demo evidence (explicit)."
+            : "Fail-closed live mode: missing SCRY_INTERNAL_TOKEN will not silently mock.",
         },
         null,
         2,
@@ -23,7 +26,9 @@ async function main() {
     return;
   }
   const bot = createBot(cfg, store);
-  console.log("Planet Council bot starting…");
+  console.log(
+    `Planet Council bot starting… mock=${cfg.SCRY_MOCK} scry=${cfg.SCRY_BASE_URL}`,
+  );
   await bot.start();
 }
 

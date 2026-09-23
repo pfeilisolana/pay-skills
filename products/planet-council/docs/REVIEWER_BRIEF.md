@@ -2,40 +2,42 @@
 
 ## Goal
 
-Ship a 30-day revenue path that **uses Scry**, does not reinvent it, and does not violate Scry’s evidence-only posture.
+Ship a revenue path that **uses Scry**, does not reinvent it, and does not violate Scry’s evidence-only posture — while giving Telegram users an **actionable edge** (not vibes).
 
 ## Decision already made
 
 Do **not** build another generic Solana Gumroad or a Trojan clone.  
 Do **not** put buy/sell signals into Scry API responses.  
-Do build **Planet Council**: Telegram briefs powered by Scry evidence + multi-model interpretation + Planet entitlements.
+Do build **Planet Council**: edge cards + briefs powered by Scry evidence + multi-model interpretation + Planet entitlements.
 
 ## What to review
 
-1. **Boundary integrity** — Is evidence vs interpretation always separated in prompts and Telegram output?  
-2. **Route ladder** — Does the Scry client escalate cheapest → deepest correctly?  
-3. **Entitlements** — Do free limits match `/api/planet/offers`? Is Plus/Pro gate coherent while LemonSqueezy IDs are unset?  
-4. **Security** — No user custody; payment verify-before-unlock; secrets server-side; no verdict laundering into Scry.  
-5. **Spend** — LLM + Scry costs vs $9.99 / $29.99 Planet pricing.  
-6. **Missing week-1 blockers** — What must Michael configure before mainnet users?
+1. **Boundary integrity** — Edge card / Evidence vs Council reading always separated?  
+2. **Route ladder** — Does the client escalate cheapest → deepest only when justified?  
+3. **Fail-closed** — Missing credentials never silently mock? Usage only after delivery?  
+4. **Entitlements** — Free/Plus/Pro/watchlist caps match `/api/planet/offers`?  
+5. **Security** — `/activate` contained; HTML escaped; prompt injection resisted?  
+6. **Spend / margin** — Parallel fetches + compact prompts vs $9.99 / $29.99 / $249 dossier?  
+7. **User edge** — Would a careful researcher actually change what they check next after one brief?
 
 ## Non-goals in this PR
 
-- Replacing Scry’s x402 agent surface  
+- Replacing Scry’s x402 agent surface (Codex owns Scry API lane)  
 - Auto-trading / sniping  
 - Guaranteed rug prediction  
 - Full Globe UI work  
+- Repairing SOL `/activate` (contained, not “fixed”)  
 
 ## Suggested reviewer prompts
 
 ```text
 Review products/planet-council for: (1) Scry evidence vs council opinion leakage,
-(2) entitlement bypass risks, (3) payment replay, (4) prompt injection via wallet
-memos / token metadata, (5) whether the 4-week plan is realistic given Planet
-checkout is still manual intake.
+(2) silent-mock failure modes, (3) entitlement bypass risks, (4) prompt injection via
+wallet memos / token metadata, (5) whether the edge card surfaces material signals
+before the LLM text.
 ```
 
 ```text
-Propose the smallest patch to connect LemonSqueezy product IDs from
-/api/planet/offers without breaking the SOL/USDC /activate flow.
+Propose the smallest patch to connect LemonSqueezy / Telegram Stars checkout from
+/api/planet/offers without re-enabling the unsafe SOL /activate claim path.
 ```

@@ -1,8 +1,10 @@
-import type { Config } from "../config.js";
+import type { Config, ModelId } from "../config.js";
+import { configuredModels } from "../config.js";
 import type { ScryEvidenceBundle } from "../scry/client.js";
 import { COUNCIL_SYSTEM_PROMPT, buildUserPrompt } from "./prompts.js";
+import { buildEdgeCard } from "./edge-card.js";
 
-export type ModelId = "claude" | "gpt" | "grok";
+export type { ModelId };
 
 export type ModelReply = {
   model: ModelId;
@@ -11,12 +13,17 @@ export type ModelReply = {
   error?: string;
 };
 
+export type CouncilResult =
+  | { ok: true; replies: ModelReply[] }
+  | { ok: false; reason: string; replies: ModelReply[] };
+
 async function callOpenAiCompatible(opts: {
   apiKey: string;
   baseUrl: string;
   model: string;
   system: string;
   user: string;
+  maxChars: number;
 }): Promise<string> {
   const res = await fetch(`${opts.baseUrl}/chat/completions`, {
     method: "POST",
@@ -39,7 +46,9 @@ async function callOpenAiCompatible(opts: {
   if (!text || typeof text !== "string") {
     throw new Error("LLM returned empty content");
   }
-  return text;
+  return text.length > opts.maxChars
+    ? `${text.slice(0, opts.maxChars - 14)}\n…[truncated]`
+    : text;
 }
 
 async function callAnthropic(opts: {
@@ -47,6 +56,7 @@ async function callAnthropic(opts: {
   model: string;
   system: string;
   user: string;
+  maxChars: number;
 }): Promise<string> {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -69,127 +79,135 @@ async function callAnthropic(opts: {
   const body = (await res.json()) as any;
   const text = body?.content?.find((c: any) => c.type === "text")?.text;
   if (!text) throw new Error("Anthropic returned empty content");
-  return text;
+  return text.length > opts.maxChars
+    ? `${text.slice(0, opts.maxChars - 14)}\n…[truncated]`
+    : text;
 }
 
-function mockReply(model: ModelId, bundle: ScryEvidenceBundle): string {
+function demoReply(model: ModelId, bundle: ScryEvidenceBundle): string {
+  const card = buildEdgeCard(bundle);
   return [
     "## Evidence summary",
     `- Target \`${bundle.target}\` (${bundle.kind}), depth=${bundle.depth}.`,
-    `- Routes: ${bundle.routes.map((r) => r.route).join(", ") || "none"}.`,
-    `- Mock mode: placeholders for local testing.`,
+    `- Synthetic demo mode — not live Scry coverage.`,
+    `- Signals: ${card.signals.map((s) => s.key).join(", ") || "none"}.`,
     "## Council reading",
     `- (${model}) Interpretation only. No trade instruction.`,
-    `- Treat coverage as partial until live Scry credentials are configured.`,
+    `- Use this path to validate Telegram formatting before wiring live credentials.`,
+    "## What changed the picture",
+    "- Demo placeholders for quarantine, lineage, and coverage.",
     "## Open questions",
     "- Confirm live Scry coverage/freshness for this target.",
-    "- Check whether deeper lineage/forensics changes the picture.",
     "## Confidence & coverage",
-    "- Confidence: low (mock evidence).",
+    "- Confidence: low (synthetic evidence).",
   ].join("\n");
+}
+
+async function runOne(
+  cfg: Config,
+  model: ModelId,
+  user: string,
+  bundle: ScryEvidenceBundle,
+): Promise<ModelReply> {
+  try {
+    if (cfg.SCRY_MOCK && configuredModels(cfg).length === 0) {
+      return { model, ok: true, text: demoReply(model, bundle) };
+    }
+    if (model === "claude") {
+      if (!cfg.ANTHROPIC_API_KEY) {
+        return { model, ok: false, text: "", error: "ANTHROPIC_API_KEY missing" };
+      }
+      return {
+        model,
+        ok: true,
+        text: await callAnthropic({
+          apiKey: cfg.ANTHROPIC_API_KEY,
+          model: cfg.ANTHROPIC_MODEL,
+          system: COUNCIL_SYSTEM_PROMPT,
+          user,
+          maxChars: cfg.MAX_MODEL_CHARS,
+        }),
+      };
+    }
+    if (model === "gpt") {
+      if (!cfg.OPENAI_API_KEY) {
+        return { model, ok: false, text: "", error: "OPENAI_API_KEY missing" };
+      }
+      return {
+        model,
+        ok: true,
+        text: await callOpenAiCompatible({
+          apiKey: cfg.OPENAI_API_KEY,
+          baseUrl: "https://api.openai.com/v1",
+          model: cfg.OPENAI_MODEL,
+          system: COUNCIL_SYSTEM_PROMPT,
+          user,
+          maxChars: cfg.MAX_MODEL_CHARS,
+        }),
+      };
+    }
+    if (!cfg.XAI_API_KEY) {
+      return { model, ok: false, text: "", error: "XAI_API_KEY missing" };
+    }
+    return {
+      model,
+      ok: true,
+      text: await callOpenAiCompatible({
+        apiKey: cfg.XAI_API_KEY,
+        baseUrl: "https://api.x.ai/v1",
+        model: cfg.XAI_MODEL,
+        system: COUNCIL_SYSTEM_PROMPT,
+        user,
+        maxChars: cfg.MAX_MODEL_CHARS,
+      }),
+    };
+  } catch (err: any) {
+    return { model, ok: false, text: "", error: err?.message ?? String(err) };
+  }
+}
+
+export function selectModels(cfg: Config, multiModel: boolean): ModelId[] {
+  const available = configuredModels(cfg);
+  if (cfg.SCRY_MOCK && available.length === 0) {
+    return multiModel ? ["claude", "gpt", "grok"] : ["claude"];
+  }
+  if (!available.length) return [];
+  if (!multiModel) return [available[0]];
+  return available.slice(0, 3);
 }
 
 export async function runCouncil(opts: {
   cfg: Config;
   bundle: ScryEvidenceBundle;
   multiModel: boolean;
-}): Promise<ModelReply[]> {
+}): Promise<CouncilResult> {
+  const card = buildEdgeCard(opts.bundle);
+  if (!card.usable && !opts.bundle.synthetic) {
+    return {
+      ok: false,
+      reason: "unusable_evidence",
+      replies: [],
+    };
+  }
+
+  const wanted = selectModels(opts.cfg, opts.multiModel);
+  if (!wanted.length) {
+    return { ok: false, reason: "no_models", replies: [] };
+  }
+
   const user = buildUserPrompt(opts.bundle);
-  const wanted: ModelId[] = opts.multiModel
-    ? ["claude", "gpt", "grok"]
-    : ["claude"];
-  const out: ModelReply[] = [];
+  const replies = await Promise.all(
+    wanted.map((model) => runOne(opts.cfg, model, user, opts.bundle)),
+  );
 
-  for (const model of wanted) {
-    try {
-      if (
-        opts.cfg.SCRY_MOCK &&
-        !opts.cfg.ANTHROPIC_API_KEY &&
-        !opts.cfg.OPENAI_API_KEY &&
-        !opts.cfg.XAI_API_KEY
-      ) {
-        out.push({ model, ok: true, text: mockReply(model, opts.bundle) });
-        continue;
-      }
-      if (model === "claude") {
-        if (!opts.cfg.ANTHROPIC_API_KEY) {
-          out.push({
-            model,
-            ok: false,
-            text: "",
-            error: "ANTHROPIC_API_KEY missing",
-          });
-          continue;
-        }
-        out.push({
-          model,
-          ok: true,
-          text: await callAnthropic({
-            apiKey: opts.cfg.ANTHROPIC_API_KEY,
-            model: opts.cfg.ANTHROPIC_MODEL,
-            system: COUNCIL_SYSTEM_PROMPT,
-            user,
-          }),
-        });
-      } else if (model === "gpt") {
-        if (!opts.cfg.OPENAI_API_KEY) {
-          out.push({
-            model,
-            ok: false,
-            text: "",
-            error: "OPENAI_API_KEY missing",
-          });
-          continue;
-        }
-        out.push({
-          model,
-          ok: true,
-          text: await callOpenAiCompatible({
-            apiKey: opts.cfg.OPENAI_API_KEY,
-            baseUrl: "https://api.openai.com/v1",
-            model: opts.cfg.OPENAI_MODEL,
-            system: COUNCIL_SYSTEM_PROMPT,
-            user,
-          }),
-        });
-      } else {
-        if (!opts.cfg.XAI_API_KEY) {
-          out.push({
-            model,
-            ok: false,
-            text: "",
-            error: "XAI_API_KEY missing",
-          });
-          continue;
-        }
-        out.push({
-          model,
-          ok: true,
-          text: await callOpenAiCompatible({
-            apiKey: opts.cfg.XAI_API_KEY,
-            baseUrl: "https://api.x.ai/v1",
-            model: opts.cfg.XAI_MODEL,
-            system: COUNCIL_SYSTEM_PROMPT,
-            user,
-          }),
-        });
-      }
-    } catch (err: any) {
-      out.push({
-        model,
-        ok: false,
-        text: "",
-        error: err?.message ?? String(err),
-      });
+  if (!replies.some((r) => r.ok)) {
+    if (opts.cfg.SCRY_MOCK) {
+      return {
+        ok: true,
+        replies: [{ model: "claude", ok: true, text: demoReply("claude", opts.bundle) }],
+      };
     }
+    return { ok: false, reason: "unavailable", replies };
   }
-
-  if (!out.some((r) => r.ok)) {
-    out.push({
-      model: "claude",
-      ok: true,
-      text: mockReply("claude", opts.bundle),
-    });
-  }
-  return out;
+  return { ok: true, replies };
 }

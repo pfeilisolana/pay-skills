@@ -7,6 +7,10 @@ export type PlanLimits = {
   multiModel: boolean;
   dailyCap?: number;
   monthlyCap?: number;
+  watchlistCap: number;
+  connectAllowed: boolean;
+  deployerAllowed: boolean;
+  digestAllowed: boolean;
   priceUsd: number;
 };
 
@@ -18,6 +22,10 @@ export const PLANS: Record<PlanId, PlanLimits> = {
     deepEvidence: false,
     multiModel: false,
     dailyCap: 3,
+    watchlistCap: 0,
+    connectAllowed: false,
+    deployerAllowed: false,
+    digestAllowed: false,
     priceUsd: 0,
   },
   plus: {
@@ -26,6 +34,10 @@ export const PLANS: Record<PlanId, PlanLimits> = {
     deepEvidence: true,
     multiModel: true,
     monthlyCap: 50,
+    watchlistCap: 10,
+    connectAllowed: true,
+    deployerAllowed: false,
+    digestAllowed: true,
     priceUsd: 9.99,
   },
   pro: {
@@ -34,6 +46,10 @@ export const PLANS: Record<PlanId, PlanLimits> = {
     deepEvidence: true,
     multiModel: true,
     monthlyCap: 250,
+    watchlistCap: 50,
+    connectAllowed: true,
+    deployerAllowed: true,
+    digestAllowed: true,
     priceUsd: 29.99,
   },
   founder: {
@@ -42,6 +58,10 @@ export const PLANS: Record<PlanId, PlanLimits> = {
     deepEvidence: true,
     multiModel: true,
     monthlyCap: 250,
+    watchlistCap: 50,
+    connectAllowed: true,
+    deployerAllowed: true,
+    digestAllowed: true,
     priceUsd: 99,
   },
 };
@@ -58,7 +78,8 @@ export function canRunCheck(opts: {
     if (opts.checksUsedToday >= cap) {
       return {
         ok: false,
-        reason: `Free plan allows ${cap}/day. /plans to upgrade.`,
+        reason:
+          `Free plan allows ${cap}/day. /plans to upgrade — Plus unlocks deep Scry ladder, 3-model council, and a 10-wallet watchlist.`,
       };
     }
     return { ok: true };

@@ -12,6 +12,7 @@ export type EntitlementRecord = {
   activatedAt?: string;
   expiresAt?: string;
   activationTx?: string;
+  watchlist: string[];
 };
 
 export type PaymentRecord = {
@@ -21,9 +22,16 @@ export type PaymentRecord = {
   activatedAt: string;
 };
 
+export type ScanCacheRecord = {
+  key: string;
+  brief: string;
+  createdAt: string;
+};
+
 type DbShape = {
   entitlements: Record<string, EntitlementRecord>;
   payments: Record<string, PaymentRecord>;
+  scanCache: Record<string, ScanCacheRecord>;
 };
 
 function monthKey(d = new Date()): string {
@@ -34,14 +42,24 @@ function dayKey(d = new Date()): string {
   return d.toISOString().slice(0, 10);
 }
 
+function ensureWatchlist(row: EntitlementRecord): EntitlementRecord {
+  if (!Array.isArray(row.watchlist)) row.watchlist = [];
+  return row;
+}
+
 export class JsonStore {
   private data: DbShape;
 
   constructor(private readonly path: string) {
     if (existsSync(path)) {
-      this.data = JSON.parse(readFileSync(path, "utf8")) as DbShape;
+      const parsed = JSON.parse(readFileSync(path, "utf8")) as Partial<DbShape>;
+      this.data = {
+        entitlements: parsed.entitlements ?? {},
+        payments: parsed.payments ?? {},
+        scanCache: parsed.scanCache ?? {},
+      };
     } else {
-      this.data = { entitlements: {}, payments: {} };
+      this.data = { entitlements: {}, payments: {}, scanCache: {} };
       this.flush();
     }
   }
@@ -63,11 +81,13 @@ export class JsonStore {
         checksUsedMonth: 0,
         dayKey: today,
         monthKey: month,
+        watchlist: [],
       };
       this.data.entitlements[telegramUserId] = fresh;
       this.flush();
       return fresh;
     }
+    ensureWatchlist(existing);
     let changed = false;
     if (existing.dayKey !== today) {
       existing.dayKey = today;
@@ -134,5 +154,77 @@ export class JsonStore {
     row.expiresAt = new Date(now.getTime() + days * 86400000).toISOString();
     this.flush();
     return row;
+  }
+
+  listWatchlist(telegramUserId: string): string[] {
+    return [...this.getEntitlement(telegramUserId).watchlist];
+  }
+
+  addWatch(
+    telegramUserId: string,
+    address: string,
+    cap: number,
+  ): { ok: true; watchlist: string[] } | { ok: false; reason: string } {
+    const row = this.getEntitlement(telegramUserId);
+    if (cap <= 0) {
+      return {
+        ok: false,
+        reason: "Watchlist requires Plus/Pro. /plans to upgrade.",
+      };
+    }
+    if (row.watchlist.includes(address)) {
+      return { ok: true, watchlist: [...row.watchlist] };
+    }
+    if (row.watchlist.length >= cap) {
+      return {
+        ok: false,
+        reason: `Watchlist full (${cap}). /unwatch one first or upgrade.`,
+      };
+    }
+    row.watchlist.push(address);
+    this.flush();
+    return { ok: true, watchlist: [...row.watchlist] };
+  }
+
+  removeWatch(
+    telegramUserId: string,
+    address: string,
+  ): { ok: true; watchlist: string[] } {
+    const row = this.getEntitlement(telegramUserId);
+    row.watchlist = row.watchlist.filter((a) => a !== address);
+    this.flush();
+    return { ok: true, watchlist: [...row.watchlist] };
+  }
+
+  getCachedBrief(key: string, maxAgeSeconds: number): string | null {
+    if (maxAgeSeconds <= 0) return null;
+    const hit = this.data.scanCache[key];
+    if (!hit) return null;
+    const age = (Date.now() - Date.parse(hit.createdAt)) / 1000;
+    if (age > maxAgeSeconds) {
+      delete this.data.scanCache[key];
+      this.flush();
+      return null;
+    }
+    return hit.brief;
+  }
+
+  putCachedBrief(key: string, brief: string) {
+    this.data.scanCache[key] = {
+      key,
+      brief,
+      createdAt: new Date().toISOString(),
+    };
+    // Keep cache bounded
+    const keys = Object.keys(this.data.scanCache);
+    if (keys.length > 200) {
+      const sorted = keys
+        .map((k) => this.data.scanCache[k])
+        .sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt));
+      for (const old of sorted.slice(0, keys.length - 200)) {
+        delete this.data.scanCache[old.key];
+      }
+    }
+    this.flush();
   }
 }
